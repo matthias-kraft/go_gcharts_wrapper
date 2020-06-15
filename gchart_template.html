@@ -1,0 +1,59 @@
+{{define "gchart_template"}}
+<head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1.0','packages':['corechart']},{'name':'visualization','version':'1.0','packages':['controls']}]}"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+           var data;
+           var options;
+           {{range $chart := .}}
+               data = new google.visualization.DataTable({
+                   cols: [
+                        {{range $header := $chart.Data.Header -}}
+                            {label: '{{$header.Label}}', type: 'number', {{if $header.Role}} role: '{{$header.Role}}', {{end}}},
+                        {{end -}}
+                    ],
+                   rows: [
+                       {{range $row := $chart.Data.Rows}}
+                       {c: [
+                            {{- range $value := $row -}}
+                               {v: '{{$value}}'},
+                            {{- end -}}
+                        ]},
+                       {{- end -}}
+                   ]}, 0.6);
+
+               options = {{$chart.Options}}
+
+               {{$chart.Name}} = new google.visualization.{{$chart.Type}}Chart(document.getElementById('{{$chart.Name}}'));
+               {{$chart.Name}}.draw(data, options)
+           {{- end}}
+        }
+
+        {{range $chart := .}}
+        function screenshot_{{$chart.Name}}() {
+            var link = document.createElement("a");
+            link.download = 'download';
+            link.innerHTML = 'download';
+            link.href = {{$chart.Name}}.getImageURI();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        {{end}}
+    </script>
+</head>
+<body>
+<div class="charts-container">
+{{range $chart := .}}
+    <div class="chart">
+        <div id="{{$chart.Name}}" style="width: 900px; height: 500px"></div>
+        <button onclick="screenshot_{{$chart.Name}}()">Save</button>
+    </div>
+{{ end }}
+</div>
+</body>
+{{end}}
